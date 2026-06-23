@@ -40,9 +40,106 @@ function loadProductsFromStorage() {
         }
     }
     
+    // Try to generate products from league data in main.js
+    try {
+        const leagueProducts = generateProductsFromLeagueData();
+        if (leagueProducts && leagueProducts.length > 0) {
+            console.log('Using products generated from league data:', leagueProducts.length);
+            return leagueProducts;
+        }
+    } catch (error) {
+        console.error('Error generating products from league data:', error);
+    }
+    
     // Fall back to comprehensive catalogue if no admin data
     console.log('Using comprehensive catalogue products');
     return getStoredComprehensiveCatalogue();
+}
+
+// Generate products from league data in main.js
+function generateProductsFromLeagueData() {
+    const products = [];
+    
+    // Combine all league data from main.js
+    const allLeagues = {
+        ...footballLeagues,
+        ...basketballLeagues,
+        ...nflLeagues,
+        ...mlbLeagues,
+        ...nhlLeagues,
+        ...cricketLeagues,
+        ...rugbyLeagues
+    };
+    
+    // Generate products for each team in each league
+    Object.keys(allLeagues).forEach(leagueName => {
+        const league = allLeagues[leagueName];
+        if (league.teams) {
+            league.teams.forEach(team => {
+                products.push({
+                    id: `${leagueName.toLowerCase().replace(/\s/g, '-')}-${team.toLowerCase().replace(/\s/g, '-')}`,
+                    name: `${team} Home Jersey`,
+                    team: team,
+                    league: leagueName,
+                    category: 'jersey',
+                    price: Math.floor(Math.random() * 10000) + 5000,
+                    compareAtPrice: Math.floor(Math.random() * 15000) + 10000,
+                    discountPercentage: Math.floor(Math.random() * 30) + 10,
+                    images: [
+                        { url: 'images/default-jersey.jpg', alt: `${team} Home Jersey` }
+                    ],
+                    averageRating: (Math.random() * 2 + 3).toFixed(1),
+                    totalReviews: Math.floor(Math.random() * 500) + 50,
+                    stockStatus: 'in-stock',
+                    new: Math.random() > 0.7,
+                    bestseller: Math.random() > 0.8,
+                    sale: Math.random() > 0.6,
+                    featured: Math.random() > 0.9,
+                    description: `Official ${team} ${leagueName} home jersey for the 2024-2025 season.`,
+                    variants: {
+                        sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+                        colors: ['Home', 'Away']
+                    }
+                });
+            });
+        }
+    });
+    
+    // Add equipment products
+    Object.keys(equipmentCategories).forEach(category => {
+        const cat = equipmentCategories[category];
+        if (cat.items) {
+            cat.items.forEach(item => {
+                products.push({
+                    id: `${category.toLowerCase()}-${item.toLowerCase().replace(/\s/g, '-')}`,
+                    name: item,
+                    team: category,
+                    league: 'Equipment',
+                    category: 'equipment',
+                    price: Math.floor(Math.random() * 5000) + 1000,
+                    compareAtPrice: Math.floor(Math.random() * 7000) + 2000,
+                    discountPercentage: Math.floor(Math.random() * 25) + 5,
+                    images: [
+                        { url: 'images/default-equipment.jpg', alt: item }
+                    ],
+                    averageRating: (Math.random() * 2 + 3).toFixed(1),
+                    totalReviews: Math.floor(Math.random() * 200) + 20,
+                    stockStatus: 'in-stock',
+                    new: Math.random() > 0.6,
+                    bestseller: Math.random() > 0.7,
+                    sale: Math.random() > 0.5,
+                    featured: Math.random() > 0.8,
+                    description: `High-quality ${item} for professional and amateur athletes.`,
+                    variants: {
+                        sizes: ['One Size', 'S', 'M', 'L', 'XL'],
+                        colors: ['Black', 'White', 'Red', 'Blue']
+                    }
+                });
+            });
+        }
+    });
+    
+    return products;
 }
 
 // Render comprehensive products to grid
