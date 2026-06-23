@@ -8,6 +8,14 @@ function updateNavigationAuthState(user) {
     const profileLink = document.getElementById('profileLink');
     const logoutLink = document.getElementById('logoutLink');
     const adminLink = document.getElementById('adminLink');
+    
+    // Mobile navigation links
+    const mobileLoginLink = document.getElementById('mobileLoginLink');
+    const mobileRegisterLink = document.getElementById('mobileRegisterLink');
+    const mobileDashboardLink = document.getElementById('mobileDashboardLink');
+    const mobileProfileLink = document.getElementById('mobileProfileLink');
+    const mobileLogoutLink = document.getElementById('mobileLogoutLink');
+    const mobileAdminLink = document.getElementById('mobileAdminLink');
 
     if (user) {
         // User is authenticated
@@ -16,11 +24,21 @@ function updateNavigationAuthState(user) {
         if (dashboardLink) dashboardLink.style.display = 'block';
         if (profileLink) profileLink.style.display = 'block';
         if (logoutLink) logoutLink.style.display = 'block';
+        
+        // Mobile links
+        if (mobileLoginLink) mobileLoginLink.style.display = 'none';
+        if (mobileRegisterLink) mobileRegisterLink.style.display = 'none';
+        if (mobileDashboardLink) mobileDashboardLink.style.display = 'block';
+        if (mobileProfileLink) mobileProfileLink.style.display = 'block';
+        if (mobileLogoutLink) mobileLogoutLink.style.display = 'block';
 
         // Check if user is admin
         checkAdminStatus(user).then(isAdmin => {
             if (adminLink) {
                 adminLink.style.display = isAdmin ? 'block' : 'none';
+            }
+            if (mobileAdminLink) {
+                mobileAdminLink.style.display = isAdmin ? 'block' : 'none';
             }
         });
     } else {
@@ -31,6 +49,14 @@ function updateNavigationAuthState(user) {
         if (profileLink) profileLink.style.display = 'none';
         if (logoutLink) logoutLink.style.display = 'none';
         if (adminLink) adminLink.style.display = 'none';
+        
+        // Mobile links
+        if (mobileLoginLink) mobileLoginLink.style.display = 'block';
+        if (mobileRegisterLink) mobileRegisterLink.style.display = 'block';
+        if (mobileDashboardLink) mobileDashboardLink.style.display = 'none';
+        if (mobileProfileLink) mobileProfileLink.style.display = 'none';
+        if (mobileLogoutLink) mobileLogoutLink.style.display = 'none';
+        if (mobileAdminLink) mobileAdminLink.style.display = 'none';
     }
 }
 
