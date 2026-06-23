@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TITANSPORTS Admin Panel</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="js/productCatalogue.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .admin-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .admin-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .admin-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .nav-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 5px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4a5568;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+            background: #f7fafc;
+            color: #2d3748;
+        }
+        
+        .tab-btn.active {
+            background: #1e3a5f;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1a202c;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #1e3a5f;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #1e3a5f;
+            box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: white;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-select:focus {
+            outline: none;
+            border-color: #1e3a5f;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: #1e3a5f;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2c5282;
+            box-shadow: 0 2px 8px rgba(30, 58, 95, 0.2);
+        }
+        
+        .btn-secondary {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+        
+        .btn-danger {
+            background: #c53030;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #9b2c2c;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 18px;
+        }
+        
+        .message {
+            padding: 14px 16px;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            display: none;
+            font-size: 0.9rem;
+            border-left: 4px solid;
+        }
+        
+        .message.success {
+            background: #f0fff4;
+            color: #2f855a;
+            border-left-color: #2f855a;
+            display: block;
+        }
+        
+        .message.error {
+            background: #fff5f5;
+            color: #c53030;
+            border-left-color: #c53030;
+            display: block;
+        }
+        
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .products-table th,
+        .products-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .products-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .products-table td {
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+        
+        .products-table tr:hover {
+            background: #f7fafc;
+        }
+        
+        .product-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-processing {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-shipped {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+        
+        .status-delivered {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-cancelled {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .file-upload {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 18px;
+            transition: all 0.2s ease;
+            background: #f7fafc;
+        }
+        
+        .file-upload:hover {
+            border-color: #1e3a5f;
+            background: #edf2f7;
+        }
+        
+        .file-upload.dragover {
+            border-color: #1e3a5f;
+            background: #e6efff;
+        }
+        
+        .upload-options {
+            background: #f7fafc;
+            padding: 18px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        /* Progress Bar Styles */
+        .progress-container {
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1e3a5f 0%, #2c5282 100%);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+        
+        /* Analytics Dashboard Styles */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .stat-card h3 {
+            font-size: 0.85rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        
+        .stat-card .stat-change {
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        
+        .stat-change.positive {
+            color: #2f855a;
+        }
+        
+        .stat-change.negative {
+            color: #c53030;
+        }
+        
+        .progress-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .progress-item {
+            margin-bottom: 15px;
+        }
+        
+        .progress-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .progress-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4a5568;
+        }
+        
+        .progress-item-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-item-fill {
+            height: 100%;
+            background: #1e3a5f;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .validation-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+        }
+        
+        .validation-status.valid {
+            background: #f0fff4;
+            color: #2f855a;
+            border: 1px solid #c6f6d5;
+        }
+        
+        .validation-status.invalid {
+            background: #fff5f5;
+            color: #c53030;
+            border: 1px solid #fed7d7;
+        }
+        
+        .validation-status.warning {
+            background: #fffaf0;
+            color: #c05621;
+            border: 1px solid #feebc8;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .products-table {
+                font-size: 0.8rem;
+            }
+            
+            .products-table th,
+            .products-table td {
+                padding: 8px 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">
+                        <img src="images/USE_THIS-removebg-preview.png" alt="TITANSPORTS Logo" class="logo-image">
+                    </div>
+                    <div class="brand-text">
+                        <div class="brand-main">TITANSPORTS</div>
+                        <div class="brand-sub">Admin Panel</div>
+                    </div>
+                </div>
+                <div class="nav-buttons">
+                    <a href="index.html" class="nav-btn">← Back to Store</a>
+                    <button class="nav-btn" onclick="exportCatalogue()">Export</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('upload')">Upload</button>
+            <button class="tab-btn" onclick="switchTab('single')">Add Product</button>
+            <button class="tab-btn" onclick="switchTab('manage')">Manage</button>
+            <button class="tab-btn" onclick="switchTab('orders')">Orders</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content active">
+            <h2 class="section-title">Shop Analytics Dashboard</h2>
+            
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <h3>Total Products</h3>
+                    <div class="stat-value" id="totalProducts">0</div>
+                    <div class="stat-change positive">↑ 12% from last month</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Inventory</h3>
+                    <div class="stat-value" id="totalInventory">0</div>
+                    <div class="stat-change positive">↑ 8% from last month</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Categories</h3>
+                    <div class="stat-value" id="totalCategories">0</div>
+                    <div class="stat-change">Active categories</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Upload Progress</h3>
+                    <div class="stat-value" id="uploadProgress">0%</div>
+                    <div class="stat-change">Current batch</div>
+                </div>
+            </div>
+            
+            <div class="progress-section">
+                <h3 style="margin-bottom: 15px; color: #2d3748; font-size: 1rem;">Inventory Upload Progress</h3>
+                
+                <div class="progress-item">
+                    <div class="progress-item-header">
+                        <span>Product Validation</span>
+                        <span id="validationProgress">0%</span>
+                    </div>
+                    <div class="progress-item-bar">
+                        <div class="progress-item-fill" id="validationBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+                
+                <div class="progress-item">
+                    <div class="progress-item-header">
+                        <span>Image Processing</span>
+                        <span id="imageProgress">0%</span>
+                    </div>
+                    <div class="progress-item-bar">
+                        <div class="progress-item-fill" id="imageBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+                
+                <div class="progress-item">
+                    <div class="progress-item-header">
+                        <span>Data Upload</span>
+                        <span id="dataProgress">0%</span>
+                    </div>
+                    <div class="progress-item-bar">
+                        <div class="progress-item-fill" id="dataBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="progress-section">
+                <h3 style="margin-bottom: 15px; color: #2d3748; font-size: 1rem;">Recent Activity</h3>
+                <div id="recentActivity" style="color: #4a5568; font-size: 0.9rem;">
+                    <p style="color: #718096; font-style: italic;">No recent activity</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload-tab" class="tab-content">
+            <h2 class="section-title">Bulk Upload</h2>
+            
+            <div class="message success" id="uploadSuccess"></div>
+            <div class="message error" id="uploadError"></div>
+
+            <div class="upload-options">
+                <div class="form-group">
+                    <label class="form-label">Upload Method</label>
+                    <select class="form-select" id="uploadMethod" onchange="toggleUploadMethod()">
+                        <option value="file">Upload File (CSV/JSON)</option>
+                        <option value="url">Import from URL</option>
+                        <option value="pinterest">Pinterest URL</option>
+                        <option value="local">Local Image Upload</option>
+                    </select>
+                </div>
+
+                <!-- File Upload -->
+                <div id="fileUploadSection">
+                    <div class="file-upload" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                        <p style="font-size: 1.1rem; margin-bottom: 5px; color: #2d3748;">Click to upload CSV or JSON file</p>
+                        <p style="color: #718096; font-size: 0.85rem;">or drag and drop</p>
+                        <input type="file" id="fileInput" style="display: none;" accept=".csv,.json">
+                    </div>
+                    <p id="selectedFileName" style="margin-bottom: 15px; font-weight: 500; color: #4a5568;"></p>
+                    
+                    <div id="validationResults" style="margin-top: 15px;"></div>
+                </div>
+
+                <!-- URL Upload -->
+                <div id="urlUploadSection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Product URL</label>
+                        <input type="url" class="form-input" id="productUrl" placeholder="https://example.com/product-data.json">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select class="form-select" id="urlProductCategory" onchange="updateSubCategories('url')" required>
+                            <option value="">Select Category</option>
+                            <option value="national">National Team</option>
+                            <option value="club">Club Jerseys</option>
+                            <option value="basketball">Basketball</option>
+                            <option value="nfl">NFL</option>
+                            <option value="mlb">MLB</option>
+                            <option value="nhl">NHL</option>
+                            <option value="cricket">Cricket</option>
+                            <option value="rugby">Rugby</option>
+                            <option value="retro">Retro</option>
+                            <option value="plain">Plain Uniforms</option>
+                            <option value="equipment">Equipment</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="urlSubCategoryGroup" style="display: none;">
+                        <label class="form-label">Team/League *</label>
+                        <select class="form-select" id="urlSubCategory">
+                            <option value="">Select Team/League</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Product Name *</label>
+                        <input type="text" class="form-input" id="urlProductName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-input" id="urlProductDescription" rows="3" placeholder="Product description..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Price (KSH) *</label>
+                        <input type="number" class="form-input" id="urlProductPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Printed/Unprinted *</label>
+                        <select class="form-select" id="urlProductPrintStatus" required>
+                            <option value="unprinted">Unprinted</option>
+                            <option value="printed">Printed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Age Group *</label>
+                        <select class="form-select" id="urlAgeGroup" onchange="toggleGenderField('url')" required>
+                            <option value="">Select Age Group</option>
+                            <option value="kid">Kid</option>
+                            <option value="adult">Adult</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="urlGenderGroup" style="display: none;">
+                        <label class="form-label">Gender *</label>
+                        <select class="form-select" id="urlGender">
+                            <option value="">Select Gender</option>
+                            <option value="men">Men</option>
+                            <option value="women">Women</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Image URL *</label>
+                        <input type="url" class="form-input" id="urlProductImage" required>
+                    </div>
+                </div>
+
+                <!-- Pinterest URL Upload -->
+                <div id="pinterestUploadSection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Pinterest Image URL *</label>
+                        <input type="url" class="form-input" id="pinterestImageUrl" placeholder="https://i.pinimg.com/236x/..." required>
+                        <small style="color: #718096; font-size: 0.85rem;">Paste the Pinterest image URL directly</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select class="form-select" id="pinterestProductCategory" onchange="updateSubCategories('pinterest')" required>
+                            <option value="">Select Category</option>
+                            <option value="national">National Team</option>
+                            <option value="club">Club Jerseys</option>
+                            <option value="basketball">Basketball</option>
+                            <option value="nfl">NFL</option>
+                            <option value="mlb">MLB</option>
+                            <option value="nhl">NHL</option>
+                            <option value="cricket">Cricket</option>
+                            <option value="rugby">Rugby</option>
+                            <option value="retro">Retro</option>
+                            <option value="plain">Plain Uniforms</option>
+                            <option value="equipment">Equipment</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="pinterestSubCategoryGroup" style="display: none;">
+                        <label class="form-label">Team/League *</label>
+                        <select class="form-select" id="pinterestSubCategory">
+                            <option value="">Select Team/League</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Product Name *</label>
+                        <input type="text" class="form-input" id="pinterestProductName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-input" id="pinterestProductDescription" rows="3" placeholder="Product description..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Price (KSH) *</label>
+                        <input type="number" class="form-input" id="pinterestProductPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Printed/Unprinted *</label>
+                        <select class="form-select" id="pinterestProductPrintStatus" required>
+                            <option value="unprinted">Unprinted</option>
+                            <option value="printed">Printed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Age Group *</label>
+                        <select class="form-select" id="pinterestAgeGroup" onchange="toggleGenderField('pinterest')" required>
+                            <option value="">Select Age Group</option>
+                            <option value="kid">Kid</option>
+                            <option value="adult">Adult</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="pinterestGenderGroup" style="display: none;">
+                        <label class="form-label">Gender *</label>
+                        <select class="form-select" id="pinterestGender">
+                            <option value="">Select Gender</option>
+                            <option value="men">Men</option>
+                            <option value="women">Women</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Local Image Upload -->
+                <div id="localUploadSection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Upload Image *</label>
+                        <div class="file-upload" id="localImageDropZone" onclick="document.getElementById('localImageInput').click()">
+                            <p style="font-size: 1.1rem; margin-bottom: 5px; color: #2d3748;">Click to upload image</p>
+                            <p style="color: #718096; font-size: 0.85rem;">or drag and drop (JPG, PNG, WebP)</p>
+                            <input type="file" id="localImageInput" style="display: none;" accept="image/jpeg,image/png,image/webp">
+                        </div>
+                        <p id="localImageFileName" style="margin-bottom: 15px; font-weight: 500; color: #4a5568;"></p>
+                        <div id="localImagePreview" style="margin-top: 15px; text-align: center;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select class="form-select" id="localProductCategory" onchange="updateSubCategories('local')" required>
+                            <option value="">Select Category</option>
+                            <option value="national">National Team</option>
+                            <option value="club">Club Jerseys</option>
+                            <option value="basketball">Basketball</option>
+                            <option value="nfl">NFL</option>
+                            <option value="mlb">MLB</option>
+                            <option value="nhl">NHL</option>
+                            <option value="cricket">Cricket</option>
+                            <option value="rugby">Rugby</option>
+                            <option value="retro">Retro</option>
+                            <option value="plain">Plain Uniforms</option>
+                            <option value="equipment">Equipment</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="localSubCategoryGroup" style="display: none;">
+                        <label class="form-label">Team/League *</label>
+                        <select class="form-select" id="localSubCategory">
+                            <option value="">Select Team/League</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Product Name *</label>
+                        <input type="text" class="form-input" id="localProductName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-input" id="localProductDescription" rows="3" placeholder="Product description..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Price (KSH) *</label>
+                        <input type="number" class="form-input" id="localProductPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Printed/Unprinted *</label>
+                        <select class="form-select" id="localProductPrintStatus" required>
+                            <option value="unprinted">Unprinted</option>
+                            <option value="printed">Printed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Age Group *</label>
+                        <select class="form-select" id="localAgeGroup" onchange="toggleGenderField('local')" required>
+                            <option value="">Select Age Group</option>
+                            <option value="kid">Kid</option>
+                            <option value="adult">Adult</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="localGenderGroup" style="display: none;">
+                        <label class="form-label">Gender *</label>
+                        <select class="form-select" id="localGender">
+                            <option value="">Select Gender</option>
+                            <option value="men">Men</option>
+                            <option value="women">Women</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Real-time Upload Data Display -->
+                <div id="realtimeUploadData" style="display: none; margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <h3 style="margin-bottom: 15px; color: #2d3748; font-size: 1rem;">Upload Progress - Real-time Data</h3>
+                    <div id="uploadDataList" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Upload Details Section -->
+                <div class="upload-details-section" style="margin-top: 20px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h3 style="margin-bottom: 15px; color: #ffffff; font-size: 1rem; font-weight: 600;">Upload Details & Settings</h3>
+                    
+                    <div class="details-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="detail-item">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #cccccc; font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" id="autoResize" checked style="accent-color: var(--primary-orange);">
+                                Auto-resize images
+                            </label>
+                        </div>
+                        <div class="detail-item">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #cccccc; font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" id="autoCompress" checked style="accent-color: var(--primary-orange);">
+                                Auto-compress images
+                            </label>
+                        </div>
+                        <div class="detail-item">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #cccccc; font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" id="generateThumbnails" checked style="accent-color: var(--primary-orange);">
+                                Generate thumbnails
+                            </label>
+                        </div>
+                        <div class="detail-item">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #cccccc; font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" id="addWatermark" style="accent-color: var(--primary-orange);">
+                                Add watermark
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="upload-stats" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-orange);" id="totalUploads">0</div>
+                                <div style="font-size: 0.8rem; color: #999999;">Total Uploads</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-orange);" id="successRate">100%</div>
+                                <div style="font-size: 0.8rem; color: #999999;">Success Rate</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-orange);" id="avgUploadTime">0s</div>
+                                <div style="font-size: 0.8rem; color: #999999;">Avg Upload Time</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Upload Mode</label>
+                    <select class="form-select" id="uploadMode">
+                        <option value="append">Append to existing</option>
+                        <option value="replace">Replace all</option>
+                    </select>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="progress-container" id="uploadProgressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="uploadProgressBar" style="width: 0%;"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="uploadStatus">Preparing upload...</span>
+                        <span id="uploadPercentage">0%</span>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="processUpload()" style="width: 100%;">Upload</button>
+            </div>
+        </div>
+
+        <!-- Single Product Tab -->
+        <div id="single-tab" class="tab-content">
+            <h2 class="section-title">Add Product</h2>
+            
+            <div class="message success" id="singleSuccess"></div>
+            <div class="message error" id="singleError"></div>
+
+            <form id="singleProductForm">
+                <div class="form-group">
+                    <label class="form-label">Image Source *</label>
+                    <select class="form-select" id="singleImageSource" onchange="toggleSingleImageSource()" required>
+                        <option value="url">Image URL</option>
+                        <option value="pinterest">Pinterest URL</option>
+                        <option value="local">Upload Local Image</option>
+                    </select>
+                </div>
+
+                <!-- Image URL -->
+                <div id="singleImageUrlSection">
+                    <div class="form-group">
+                        <label class="form-label">Image URL *</label>
+                        <input type="url" class="form-input" id="singleImage" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div id="singleImagePreview" style="margin-top: 10px; text-align: center;"></div>
+                </div>
+
+                <!-- Pinterest URL -->
+                <div id="singlePinterestSection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Pinterest Image URL *</label>
+                        <input type="url" class="form-input" id="singlePinterestImage" placeholder="https://i.pinimg.com/236x/...">
+                        <small style="color: #718096; font-size: 0.85rem;">Paste the Pinterest image URL directly</small>
+                    </div>
+                    <div id="singlePinterestPreview" style="margin-top: 10px; text-align: center;"></div>
+                </div>
+
+                <!-- Local Image Upload -->
+                <div id="singleLocalSection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Upload Image *</label>
+                        <div class="file-upload" id="singleLocalDropZone" onclick="document.getElementById('singleLocalImageInput').click()">
+                            <p style="font-size: 1.1rem; margin-bottom: 5px; color: #2d3748;">Click to upload image</p>
+                            <p style="color: #718096; font-size: 0.85rem;">or drag and drop (JPG, PNG, WebP)</p>
+                            <input type="file" id="singleLocalImageInput" style="display: none;" accept="image/jpeg,image/png,image/webp">
+                        </div>
+                        <p id="singleLocalFileName" style="margin-bottom: 15px; font-weight: 500; color: #4a5568;"></p>
+                        <div id="singleLocalPreview" style="margin-top: 10px; text-align: center;"></div>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Product Name *</label>
+                        <input type="text" class="form-input" id="singleName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Price (KSH) *</label>
+                        <input type="number" class="form-input" id="singlePrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select class="form-select" id="singleCategory" onchange="updateSubCategories('single')" required>
+                            <option value="">Select Category</option>
+                            <option value="national">National Team</option>
+                            <option value="club">Club Jerseys</option>
+                            <option value="basketball">Basketball</option>
+                            <option value="nfl">NFL</option>
+                            <option value="mlb">MLB</option>
+                            <option value="nhl">NHL</option>
+                            <option value="cricket">Cricket</option>
+                            <option value="rugby">Rugby</option>
+                            <option value="retro">Retro</option>
+                            <option value="plain">Plain Uniforms</option>
+                            <option value="equipment">Equipment</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="singleSubCategoryGroup" style="display: none;">
+                        <label class="form-label">Team/League *</label>
+                        <select class="form-select" id="singleSubCategory">
+                            <option value="">Select Team/League</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Age Group *</label>
+                        <select class="form-select" id="singleAgeGroup" onchange="toggleGenderField()" required>
+                            <option value="">Select Age Group</option>
+                            <option value="kid">Kid</option>
+                            <option value="adult">Adult</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="singleGenderGroup" style="display: none;">
+                        <label class="form-label">Gender *</label>
+                        <select class="form-select" id="singleGender">
+                            <option value="">Select Gender</option>
+                            <option value="men">Men</option>
+                            <option value="women">Women</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-input" id="singleQuantity" value="1" min="1">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" id="singleDescription" rows="3" placeholder="Product description..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Print Status</label>
+                    <select class="form-select" id="singlePrintStatus">
+                        <option value="unprinted">Unprinted</option>
+                        <option value="printed">Printed</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Add Product</button>
+            </form>
+        </div>
+
+        <!-- Manage Tab -->
+        <div id="manage-tab" class="tab-content">
+            <h2 class="section-title">Manage Products</h2>
+            
+            <div class="form-grid" style="margin-bottom: 15px;">
+                <div class="form-group">
+                    <input type="text" class="form-input" id="manageSearch" placeholder="Search...">
+                </div>
+                <div class="form-group">
+                    <select class="form-select" id="manageFilter">
+                        <option value="">All Products</option>
+                        <option value="football">Football</option>
+                        <option value="basketball">Basketball</option>
+                        <option value="equipment">Equipment</option>
+                    </select>
+                </div>
+            </div>
+
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Sport</th>
+                        <th>Age Group</th>
+                        <th>Gender</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    <!-- Products loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Orders Tab -->
+        <div id="orders-tab" class="tab-content">
+            <h2 class="section-title">Order Management</h2>
+            
+            <div class="form-grid" style="margin-bottom: 15px;">
+                <div class="form-group">
+                    <input type="text" class="form-input" id="orderSearch" placeholder="Search orders...">
+                </div>
+                <div class="form-group">
+                    <select class="form-select" id="orderStatusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select class="form-select" id="paymentStatusFilter">
+                        <option value="">All Payment Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+            </div>
+
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <!-- Orders loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/adminEnhanced.js"></script>
+</body>
+</html>

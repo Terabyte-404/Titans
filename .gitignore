@@ -1,0 +1,91 @@
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor and IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs and Runtime Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary Files
+*.tmp
+*.temp
+~*
+
+# Cache and Build Files
+.cache/
+*.cache
+node_modules/
+dist/
+build/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Package Manager Files
+package-lock.json
+yarn.lock
+
+# Local Configuration
+config.local.js
+config.local.json
+
+# Backup Files
+*.bak
+*.backup
+*.old
+
+# Test Files
+*.test.js
+coverage/
+
+# Documentation Build
+docs/_build/
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Archive Files
+*.zip
+*.tar.gz
+*.rar
+
+# Microsoft Office Files
+*.docx
+*.xlsx
+*.pptx
+
+# Adobe Files
+*.psd
+*.ai
+*.eps
+
+# Video Files
+*.mp4
+*.avi
+*.mov
+*.wmv
+
+# Large Binary Files
+*.exe
+*.dmg
+*.pkg

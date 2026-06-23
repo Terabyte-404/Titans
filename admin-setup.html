@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Setup - TITANSPORTS</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .setup-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 2rem;
+        }
+
+        .setup-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .setup-card h1 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .setup-card p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .warning-box h3 {
+            color: #ffc107;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-box p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            margin: 0;
+            text-align: left;
+        }
+
+        .setup-button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-orange);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .setup-button:hover {
+            background: #e85d2c;
+            transform: translateY(-2px);
+        }
+
+        .setup-button:disabled {
+            background: rgba(255, 107, 53, 0.5);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #4caf50;
+            font-size: 0.9rem;
+            display: none;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #f44336;
+            font-size: 0.9rem;
+            display: none;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .user-info p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+            text-align: left;
+        }
+
+        .user-info strong {
+            color: var(--primary-orange);
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <h1>Admin Setup</h1>
+            <p>Promote your account to admin role</p>
+
+            <div class="warning-box">
+                <h3>⚠️ Security Warning</h3>
+                <p>This page promotes your current logged-in account to admin role. After setting up admin access, delete this file (admin-setup.html) for security.</p>
+            </div>
+
+            <div class="success-message" id="successMessage"></div>
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="user-info" id="userInfo">
+                <p>Loading user information...</p>
+            </div>
+
+            <button class="setup-button" id="setupButton" onclick="promoteToAdmin()">
+                Promote to Admin
+            </button>
+
+            <div style="margin-top: 1rem; text-align: center;">
+                <a href="index.html" style="color: rgba(255, 255, 255, 0.7); text-decoration: none; font-size: 0.9rem;">
+                    ← Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        // Load user info
+        async function loadUserInfo() {
+            const user = auth.currentUser;
+            const userInfoDiv = document.getElementById('userInfo');
+            const setupButton = document.getElementById('setupButton');
+
+            if (user) {
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    const userData = userDoc.exists ? userDoc.data() : {};
+
+                    userInfoDiv.innerHTML = `
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>Name:</strong> ${user.displayName || 'Not set'}</p>
+                        <p><strong>Current Role:</strong> ${userData.role || 'standard'}</p>
+                        <p><strong>Email Verified:</strong> ${user.emailVerified ? 'Yes' : 'No'}</p>
+                    `;
+
+                    // Disable button if already admin
+                    if (userData.role === 'admin') {
+                        setupButton.disabled = true;
+                        setupButton.textContent = 'Already Admin';
+                    }
+                } catch (error) {
+                    userInfoDiv.innerHTML = '<p style="color: #ff6b6b;">Error loading user information</p>';
+                }
+            } else {
+                userInfoDiv.innerHTML = '<p style="color: #ff6b6b;">No user logged in. Please login first.</p>';
+                setupButton.disabled = true;
+                setupButton.textContent = 'Login Required';
+            }
+        }
+
+        // Promote to admin
+        async function promoteToAdmin() {
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const setupButton = document.getElementById('setupButton');
+
+            try {
+                setupButton.disabled = true;
+                setupButton.textContent = 'Processing...';
+
+                const success = await promoteSelfToAdmin();
+
+                if (success) {
+                    successMessage.textContent = '✓ Successfully promoted to admin! You can now access the admin panel.';
+                    successMessage.style.display = 'block';
+                    errorMessage.style.display = 'none';
+                    setupButton.textContent = 'Success!';
+
+                    // Reload user info after 2 seconds
+                    setTimeout(() => {
+                        loadUserInfo();
+                    }, 2000);
+                } else {
+                    errorMessage.textContent = '✗ Failed to promote to admin. Please try again.';
+                    errorMessage.style.display = 'block';
+                    successMessage.style.display = 'none';
+                    setupButton.disabled = false;
+                    setupButton.textContent = 'Promote to Admin';
+                }
+            } catch (error) {
+                console.error('Error promoting to admin:', error);
+                errorMessage.textContent = '✗ Error: ' + error.message;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+                setupButton.disabled = false;
+                setupButton.textContent = 'Promote to Admin';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuthState((user) => {
+                loadUserInfo();
+            });
+        });
+    </script>
+</body>
+</html>

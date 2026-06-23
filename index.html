@@ -8,72 +8,496 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script src="js/productCatalogue.js"></script>
+    <script src="js/catalogueManager.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/navigation-auth.js"></script>
+    <style>
+        .auth-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .auth-loading-content {
+            text-align: center;
+            color: white;
+        }
+        .auth-loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary-orange);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        // Require authentication for main website content
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create loading overlay
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'auth-loading';
+            loadingOverlay.id = 'authLoading';
+            loadingOverlay.innerHTML = `
+                <div class="auth-loading-content">
+                    <div class="auth-loading-spinner"></div>
+                    <p>Verifying authentication...</p>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
+            
+            // Hide main content initially
+            document.body.style.opacity = '0';
+            
+            firebase.auth().onAuthStateChanged(function(user) {
+                const loadingOverlay = document.getElementById('authLoading');
+                if (user) {
+                    // User is authenticated, show content
+                    if (loadingOverlay) {
+                        loadingOverlay.style.opacity = '0';
+                        setTimeout(() => loadingOverlay.remove(), 300);
+                    }
+                    document.body.style.opacity = '1';
+                    console.log('User is authenticated:', user.email);
+                } else {
+                    // User is not authenticated, redirect to login
+                    console.log('User is not authenticated, redirecting to login');
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+    </script>
 </head>
 <body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <img src="images/USE_THIS-removebg-preview.png" alt="TITANSPORTS Logo" class="splash-logo">
+            <h1 class="splash-text">TITANSPORTS</h1>
+        </div>
+    </div>
+
     <header>
-        <div class="logo">
-            <img src="images/USE_THIS-removebg-preview.png" alt="TITANSPORTS Logo" class="logo-image">
-        </div>
-        <nav>
-            <a href="#home">Home</a>
-            <a href="#products">Shop</a>
-            <a href="login.html">Admin</a>
-        </nav>
-        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
-        <div class="mobile-menu" id="mobileMenu">
-            <button class="mobile-menu-close" onclick="toggleMobileMenu()">×</button>
-            <a href="#home" onclick="toggleMobileMenu()">Home</a>
-            <a href="#products" onclick="toggleMobileMenu()">Shop</a>
-            <a href="login.html" onclick="toggleMobileMenu()">Admin</a>
-        </div>
-        <div class="cart-icon" onclick="toggleCart()">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <path d="M16 10a4 4 0 0 1-8 0"></path>
-            </svg>
-            <div class="cart-count" id="cartCount">0</div>
+        <div class="container">
+            <div class="header-main">
+                <div class="header-nav-search-cart">
+                    <div class="logo">
+                        <img src="images/USE_THIS-removebg-preview.png" alt="TITANSPORTS Logo" class="logo-image">
+                    </div>
+                    <nav>
+                        <a href="#home">Home</a>
+                        <a href="#products">Shop</a>
+                        <a href="admin-enhanced.html" id="adminLink" style="display: none;">Admin</a>
+                        <a href="login.html" id="loginLink">Login</a>
+                        <a href="register.html" id="registerLink">Register</a>
+                        <a href="dashboard.html" id="dashboardLink" style="display: none;">Dashboard</a>
+                        <a href="profile.html" id="profileLink" style="display: none;">Profile</a>
+                        <a href="#" onclick="logout()" id="logoutLink" style="display: none;">Logout</a>
+                    </nav>
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search jerseys, teams, equipment..." class="search-input">
+                        <button class="search-btn" onclick="performSearch()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                        </button>
+                        <div class="search-results" id="searchResults" style="display: none;">
+                            <!-- Search results will appear here -->
+                        </div>
+                    </div>
+                    <div class="cart-icon" onclick="toggleCart()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                        <div class="cart-count" id="cartCount">0</div>
+                    </div>
+                </div>
+            </div>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+            <div class="mobile-menu" id="mobileMenu">
+                <button class="mobile-menu-close" onclick="toggleMobileMenu()">×</button>
+                <button class="back-btn mobile-back-btn" onclick="toggleMobileMenu()">← Back</button>
+                <a href="#home" onclick="toggleMobileMenu()">Home</a>
+                <a href="#products" onclick="toggleMobileMenu()">Shop</a>
+                <a href="#login.html" onclick="toggleMobileMenu()">Admin</a>
+            </div>
         </div>
     </header>
 
     <section class="hero" id="home">
-        <div class="hero-content">
-            <h1>NOWHERE<br>ELSE</h1>
-            <p>online platform for all sports gear,wear and equipment</p>
-            <a href="#products" class="cta-button">SHOP NOW</a>
+        <div class="hero-slideshow" id="heroSlideshow">
+            <!-- All slides will be added dynamically from JavaScript -->
+        </div>
+        
+        <!-- Slideshow Controls -->
+        <div class="slideshow-controls">
+            <button class="slide-btn prev-btn" onclick="changeSlide(-1)">❮</button>
+            <button class="slide-btn next-btn" onclick="changeSlide(1)">❯</button>
+        </div>
+        
+        <!-- Slide Indicators -->
+        <div class="slide-indicators" id="slideIndicators">
+            <span class="indicator active" onclick="goToSlide(0)"></span>
         </div>
     </section>
 
     <section class="products" id="products">
-        <h2 class="section-title">FEATURED JERSEYS, GEAR & EQUIPMENT</h2>
-        <div class="filters">
-            <button class="filter-btn active" onclick="showAllSports()">All Sports</button>
-            <button class="filter-btn" onclick="filterBySport('equipment')">Equipment</button>
+        <h2 class="section-title">JERSEYS, EQUIPMENT & UNIFORMS</h2>
+        
+        <!-- Advanced Filters -->
+        <div class="advanced-filters" id="advancedFilters">
+            <div class="filter-group">
+                <label>Sport:</label>
+                <select id="sportFilter" onchange="applyAdvancedFilters()">
+                    <option value="">All Sports</option>
+                    <option value="football">Football</option>
+                    <option value="basketball">Basketball</option>
+                    <option value="rugby">Rugby</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>League:</label>
+                <select id="leagueFilter" onchange="applyAdvancedFilters()">
+                    <option value="">All Leagues</option>
+                    <option value="National Team">National Team</option>
+                    <option value="Premier League">Premier League</option>
+                    <option value="La Liga">La Liga</option>
+                    <option value="Serie A">Serie A</option>
+                    <option value="Bundesliga">Bundesliga</option>
+                    <option value="Ligue 1">Ligue 1</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Gender:</label>
+                <select id="genderFilter" onchange="applyAdvancedFilters()">
+                    <option value="">All</option>
+                    <option value="men">Men</option>
+                    <option value="women">Women</option>
+                    <option value="kids">Kids</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Price Range:</label>
+                <select id="priceFilter" onchange="applyAdvancedFilters()">
+                    <option value="">All Prices</option>
+                    <option value="0-5000">Under KSH 5,000</option>
+                    <option value="5000-10000">KSH 5,000 - KSH 10,000</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Availability:</label>
+                <select id="stockFilter" onchange="applyAdvancedFilters()">
+                    <option value="">All</option>
+                    <option value="in-stock">In Stock</option>
+                    <option value="low-stock">Low Stock</option>
+                    <option value="out-of-stock">Out of Stock</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Sort By:</label>
+                <select id="sortFilter" onchange="applyAdvancedFilters()">
+                    <option value="featured">Featured</option>
+                    <option value="newest">Newest</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="bestselling">Bestselling</option>
+                </select>
+            </div>
+            <button class="reset-filters-btn" onclick="resetFilters()">Reset Filters</button>
         </div>
-        <div class="sub-filters" id="subFilters" style="display: none;">
-            <!-- Sub-filters will be loaded here -->
+        <div class="sub-filters" id="nationalSubFilters" style="display: none;">
+            <button class="sub-filter-btn" onclick="filterByGender('men', this)">Men</button>
+            <button class="sub-filter-btn" onclick="filterByGender('women', this)">Women</button>
+            <button class="sub-filter-btn" onclick="filterByGender('kids', this)">Kids</button>
+            <div class="team-divider"></div>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Argentina')">Argentina</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Belgium')">Belgium</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Brazil')">Brazil</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Cameroon')">Cameroon</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Canada')">Canada</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Croatia')">Croatia</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Denmark')">Denmark</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('England')">England</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('France')">France</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Germany')">Germany</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Italy')">Italy</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Japan')">Japan</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Mexico')">Mexico</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Morocco')">Morocco</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Netherlands')">Netherlands</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Poland')">Poland</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Portugal')">Portugal</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Saudi Arabia')">Saudi Arabia</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Senegal')">Senegal</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Serbia')">Serbia</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('South Korea')">South Korea</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Spain')">Spain</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Switzerland')">Switzerland</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Tunisia')">Tunisia</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('USA')">USA</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Uruguay')">Uruguay</button>
+            <button class="sub-filter-btn" onclick="filterByNationalTeam('Wales')">Wales</button>
+        </div>
+        <div class="sub-filters" id="clubSubFilters" style="display: none;">
+            <button class="sub-filter-btn" onclick="filterByGender('men', this)">Men</button>
+            <button class="sub-filter-btn" onclick="filterByGender('women', this)">Women</button>
+            <button class="sub-filter-btn" onclick="filterByGender('kids', this)">Kids</button>
+            <div class="team-divider"></div>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'Premier League', this)">Premier League</button>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'La Liga', this)">La Liga</button>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'Serie A', this)">Serie A</button>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'Bundesliga', this)">Bundesliga</button>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'Ligue 1', this)">Ligue 1</button>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'MLS', this)">MLS</button>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'Eredivisie', this)">Eredivisie</button>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'Primeira Liga', this)">Primeira Liga</button>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'Brasileirão', this)">Brasileirão</button>
+            <button class="sub-filter-btn" onclick="filterByLeague('club', 'Liga MX', this)">Liga MX</button>
+        </div>
+        <div class="sub-filters" id="retroSubFilters" style="display: none;">
+            <button class="sub-filter-btn" onclick="filterByGender('men', this)">Men</button>
+            <button class="sub-filter-btn" onclick="filterByGender('women', this)">Women</button>
+            <button class="sub-filter-btn" onclick="filterByGender('kids', this)">Kids</button>
+            <div class="team-divider"></div>
+            <button class="sub-filter-btn" onclick="filterBySubCategory('nation')">Nation</button>
+            <button class="sub-filter-btn" onclick="filterBySubCategory('club')">Club</button>
+        </div>
+        <div class="sub-filters" id="plainSubFilters" style="display: none;">
+            <button class="sub-filter-btn" onclick="filterByGender('men', this)">Men</button>
+            <button class="sub-filter-btn" onclick="filterByGender('women', this)">Women</button>
+            <button class="sub-filter-btn" onclick="filterByGender('kids', this)">Kids</button>
+        </div>
+        <div class="sub-filters" id="equipmentSubFilters" style="display: none;">
+            <button class="sub-filter-btn" onclick="filterByGender('men', this)">Men</button>
+            <button class="sub-filter-btn" onclick="filterByGender('women', this)">Women</button>
+            <button class="sub-filter-btn" onclick="filterByGender('kids', this)">Kids</button>
+            <div class="team-divider"></div>
+            <button class="sub-filter-btn" onclick="filterBySubCategory('gears')">Gears</button>
+            <button class="sub-filter-btn" onclick="filterBySubCategory('sports wear')">Sports wear</button>
+            <button class="sub-filter-btn" onclick="filterBySubCategory('tools')">Tools</button>
+        </div>
+                                <div class="search-section" id="searchSection" style="display: none;">
+            <div class="search-header">
+                <button class="back-btn" onclick="clearSearch()">← Back</button>
+                <h3>Search Results</h3>
+                <button class="close-search" onclick="clearSearch()">×</button>
+            </div>
+            <div class="search-info" id="searchInfo"></div>
+            <div class="search-filters">
+                <button class="search-filter-btn active" onclick="sortSearchResults('relevance')">Relevance</button>
+                <button class="search-filter-btn" onclick="sortSearchResults('name')">Name</button>
+                <button class="search-filter-btn" onclick="sortSearchResults('price-low')">Price: Low to High</button>
+                <button class="search-filter-btn" onclick="sortSearchResults('price-high')">Price: High to Low</button>
+            </div>
         </div>
         <div class="product-grid" id="productGrid">
             <!-- Products will be loaded here -->
         </div>
+        
+        <!-- Product Detail Section -->
+        <div class="product-detail-section" id="productDetailSection" style="display: none;">
+            <div class="product-detail-container">
+                <button class="back-to-grid-btn" onclick="closeProductDetail()">← Back to Products</button>
+                <div class="product-detail-content">
+                    <div class="product-detail-gallery">
+                        <div class="main-image">
+                            <img id="detailMainImage" src="" alt="" class="detail-main-image">
+                        </div>
+                        <div class="thumbnail-gallery" id="detailThumbnailGallery">
+                            <!-- Thumbnails will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="product-detail-info">
+                        <div class="product-badges" id="detailBadges">
+                            <!-- Badges will be loaded here -->
+                        </div>
+                        <h1 id="detailName" class="detail-name"></h1>
+                        <div class="detail-rating" id="detailRating">
+                            <!-- Rating will be loaded here -->
+                        </div>
+                        <p id="detailShortDescription" class="detail-short-description"></p>
+                        <div class="detail-price-section">
+                            <span id="detailPrice" class="detail-price"></span>
+                            <span id="detailComparePrice" class="detail-compare-price"></span>
+                            <span id="detailDiscount" class="detail-discount"></span>
+                        </div>
+                        <div class="detail-variants">
+                            <div class="variant-selector">
+                                <label>Size:</label>
+                                <div class="size-options" id="detailSizeOptions">
+                                    <!-- Size options will be loaded here -->
+                                </div>
+                                <button class="size-guide-btn" onclick="openSizeGuide()">Size Guide</button>
+                            </div>
+                            <div class="variant-selector">
+                                <label>Color:</label>
+                                <div class="color-options" id="detailColorOptions">
+                                    <!-- Color options will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="detail-stock-info" id="detailStockInfo">
+                            <!-- Stock info will be loaded here -->
+                        </div>
+                        <div class="detail-actions">
+                            <div class="quantity-selector">
+                                <label>Quantity:</label>
+                                <button class="qty-btn" onclick="decrementDetailQty()">-</button>
+                                <input type="number" id="detailQuantity" value="1" min="1" max="10">
+                                <button class="qty-btn" onclick="incrementDetailQty()">+</button>
+                            </div>
+                            <button class="add-to-cart-detail-btn" onclick="addToCartFromDetail()">ADD TO CART</button>
+                            <button class="wishlist-btn" onclick="addToWishlist()">♡ Wishlist</button>
+                        </div>
+                        <div class="detail-specifications">
+                            <h3>Specifications</h3>
+                            <div id="detailSpecs">
+                                <!-- Specifications will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="detail-features">
+                            <h3>Features</h3>
+                            <ul id="detailFeatures">
+                                <!-- Features will be loaded here -->
+                            </ul>
+                        </div>
+                        <div class="detail-description">
+                            <h3>Description</h3>
+                            <p id="detailLongDescription"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <footer>
-        <div class="footer-logo">
-            <img src="images/USE_THIS-removebg-preview.png" alt="TITANSPORTS Logo" class="footer-logo-image">
+        <div class="footer-content">
+            <!-- About Section -->
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <img src="images/USE_THIS-removebg-preview.png" alt="TITANSPORTS Logo" class="footer-logo-image">
+                </div>
+                <p class="footer-description">Your premier destination for quality sports jerseys, equipment, and uniforms. We bring you the best in athletic wear.</p>
+                <!-- Social Media Icons -->
+                <div class="social-icons">
+                    <a href="https://wa.me/254718501780" target="_blank" class="social-icon whatsapp">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                    </a>
+                    <a href="https://www.tiktok.com/@_titansport?_r=1&_t=ZS-96AVWRnBcRR" target="_blank" class="social-icon tiktok">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 2.96-1.43-.13-2.77-.8-3.8-1.8-1.22-1.23-1.83-2.97-1.67-4.69.14-1.43.82-2.77 1.85-3.79 1.12-1.12 2.68-1.71 4.27-1.83.02 1.48.04 2.96.04 4.44-.99-.08-2.05.18-2.89.93-.95.87-1.38 2.26-1.07 3.52.31 1.29 1.54 2.25 2.86 2.21 1.4-.05 2.61-1.23 2.66-2.63.03-1.46.01-2.92.01-4.38.01-4.05.01-8.11.01-12.16z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Links Section -->
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <div class="footer-links">
+                    <a href="index.html">Home</a>
+                    <a href="#products">Products</a>
+                    <a href="#about">About Us</a>
+                    <a href="#contact">Contact</a>
+                </div>
+            </div>
+
+            <!-- Customer Service Section -->
+            <div class="footer-section">
+                <h3>Customer Service</h3>
+                <div class="footer-links">
+                    <a href="privacy-policy.html">Privacy Policy</a>
+                    <a href="terms-of-service.html">Terms of Service</a>
+                    <a href="shipping-info.html">Shipping Info</a>
+                    <a href="returns.html">Returns</a>
+                </div>
+            </div>
+
+            <!-- Newsletter Section -->
+            <div class="footer-section">
+                <h3>Newsletter</h3>
+                <p class="footer-description">Subscribe for exclusive offers and updates.</p>
+                <form class="newsletter-form" onsubmit="handleNewsletterSubmit(event)">
+                    <input type="email" placeholder="Enter your email" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </div>
         </div>
-        <div class="footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Shipping Info</a>
-            <a href="#">Returns</a>
+
+        <!-- Trust Badges -->
+        <div class="trust-badges">
+            <div class="trust-badge">
+                <div class="trust-badge-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    </svg>
+                </div>
+                <span>Free Shipping</span>
+            </div>
+            <div class="trust-badge">
+                <div class="trust-badge-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+                <span>Secure Payment</span>
+            </div>
+            <div class="trust-badge">
+                <div class="trust-badge-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                </div>
+                <span>Easy Returns</span>
+            </div>
+            <div class="trust-badge">
+                <div class="trust-badge-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <span>24/7 Support</span>
+            </div>
         </div>
-        <p class="copyright">© 2026 TITANSPORTS. All rights reserved.</p>
+
+        <div class="footer-bottom">
+            <p class="copyright">© 2026 TITANSPORTS. All rights reserved.</p>
+        </div>
     </footer>
 
     <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
     <div class="cart-drawer" id="cartDrawer">
         <div class="cart-header">
+            <button class="back-btn" onclick="toggleCart()">← Back</button>
             <h3 class="cart-title">YOUR CART</h3>
             <button class="close-cart" onclick="toggleCart()">&times;</button>
         </div>
@@ -84,53 +508,181 @@
             <span>Total:</span>
             <span id="cartTotal">KSH 0</span>
         </div>
-        <button class="checkout-btn" onclick="checkout()">CHECKOUT</button>
+        <button class="checkout-btn" onclick="proceedToCheckout()">CHECKOUT</button>
     </div>
 
-    <!-- Product Detail Modal -->
-    <div class="product-modal" id="productModal">
+    <!-- Checkout Modal -->
+    <div class="checkout-modal" id="checkoutModal">
+        <div class="checkout-overlay" onclick="closeCheckout()"></div>
+        <div class="checkout-content">
+            <div class="checkout-header">
+                <button class="back-btn" onclick="toggleCart()">← Back to Cart</button>
+                <h2>CHECKOUT</h2>
+                <button class="close-checkout" onclick="closeCheckout()">&times;</button>
+            </div>
+            
+            <div class="checkout-body">
+                <div class="order-summary">
+                    <h3>Order Summary</h3>
+                    <div class="order-items" id="orderItems">
+                        <!-- Order items will be loaded here -->
+                    </div>
+                    
+                    <div class="order-breakdown">
+                        <div class="breakdown-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">KSH 0</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Shipping:</span>
+                            <span id="shipping">KSH 0</span>
+                        </div>
+                        <div class="breakdown-row discount-row" id="discountRow" style="display: none;">
+                            <span>Discount:</span>
+                            <span id="discount">-KSH 0</span>
+                        </div>
+                        <div class="breakdown-row total-row">
+                            <span>Total:</span>
+                            <span id="finalTotal">KSH 0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="payment-section">
+                    <h3>Payment Method</h3>
+                    
+                    <p style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 20px;">
+<path d="M8 12 L8 12.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M16 12 L16 12.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        Payment integration removed. Contact us for manual payment options.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="checkout-footer">
+                <button class="place-order-btn" id="placeOrderBtn" onclick="placeOrder()" style="display: none;">PLACE ORDER</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact Product Detail Modal with Payment -->
+    <div class="compact-product-modal" id="productModal">
         <div class="modal-overlay" onclick="closeProductModal()"></div>
         <div class="modal-content">
-            <button class="close-modal" onclick="closeProductModal()">&times;</button>
+            <button class="close-btn" onclick="closeProductModal()">×</button>
             <div class="modal-body">
-                <div class="product-image-container">
-                    <img id="modalProductImage" src="" alt="Product Image">
+                <div class="modal-image-section">
+                    <img id="modalProductImage" src="" alt="" class="modal-product-image">
                 </div>
-                <div class="product-details">
-                    <h2 id="modalProductName">Product Name</h2>
-                    <p id="modalProductSport">Sport/Category</p>
-                    <p id="modalProductPrice">KSH 0</p>
-                    <div class="product-description">
-                        <h3>Product Details</h3>
-                        <p>Premium quality sports jerseys, gear & equipment designed for peak performance and maximum comfort.</p>
-                        <ul>
-                            <li>Authentic design & materials</li>
-                            <li>Professional-grade equipment</li>
-                            <li>Official licensed products</li>
-                            <li>Available in multiple sizes</li>
-                            <li>Durable & long-lasting</li>
-                            <li>Performance optimized</li>
-                        </ul>
+                <div class="modal-details-section">
+                    <h2 id="modalProductName" class="product-title"></h2>
+                    <div class="product-meta">
+                        <span id="modalProductSport"></span>
+                        <span class="separator">•</span>
+                        <span id="modalProductLeague"></span>
                     </div>
-                    <div class="modal-actions">
-                        <div class="size-selector">
-                            <label>Size:</label>
-                            <select id="sizeSelect">
-                                <option value="S">S</option>
-                                <option value="M">M</option>
-                                <option value="L">L</option>
-                                <option value="XL">XL</option>
-                                <option value="XXL">XXL</option>
-                            </select>
+                    <div class="product-price-section">
+                        <span id="modalProductPrice" class="current-price"></span>
+                        <div id="modalPrintStatus" class="print-status-badge"></div>
+                    </div>
+                    
+                    <div class="product-options">
+                        <div class="size-options" id="sizeOptions">
+                            <button class="size-btn" data-size="S">S</button>
+                            <button class="size-btn active" data-size="M">M</button>
+                            <button class="size-btn" data-size="L">L</button>
+                            <button class="size-btn" data-size="XL">XL</button>
+                            <button class="size-btn" data-size="XXL">XXL</button>
                         </div>
+                        
                         <div class="quantity-selector">
-                            <label>Quantity:</label>
-                            <input type="number" id="quantitySelect" value="1" min="1" max="10">
+                            <button class="quantity-btn minus" onclick="decreaseQuantity()">-</button>
+                            <input type="number" id="quantitySelect" value="1" min="1" max="10" readonly>
+                            <button class="quantity-btn plus" onclick="increaseQuantity()">+</button>
                         </div>
-                        <button class="add-to-cart-btn" onclick="addToCartFromModal()">ADD TO CART</button>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button class="add-to-cart-btn" onclick="addToCartFromModal()">Add to Cart</button>
+                        <button class="buy-now-btn" onclick="buyNow()">Buy Now</button>
+                    </div>
+                    
+                    <div class="payment-info">
+                        <span class="payment-label">Pay with:</span>
+                        <div class="payment-methods">
+                            <span class="payment-method">Cash on Delivery</span>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Social Media Icons -->
+    <div class="social-icons">
+        <a href="https://wa.me/254718501780" target="_blank" class="social-icon whatsapp">
+            <img src="https://i.pinimg.com/736x/4a/c9/fd/4ac9fd276805dabe1aa4b02aa4c8c0fd.jpg" alt="WhatsApp" width="24" height="24">
+        </a>
+        <a href="https://www.tiktok.com/@_titansport?_r=1&_t=ZS-96AVWRnBcRR" target="_blank" class="social-icon tiktok">
+            <img src="https://i.pinimg.com/736x/4f/2c/70/4f2c70a570c6947c148861f0649f24ed.jpg" alt="TikTok" width="24" height="24">
+        </a>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+        ↑
+    </button>
+
+    <!-- Size Guide Modal -->
+    <div class="size-guide-modal" id="sizeGuideModal">
+        <div class="size-guide-content">
+            <div class="size-guide-header">
+                <h2>Size Guide</h2>
+                <button class="size-guide-close" onclick="closeSizeGuide()">×</button>
+            </div>
+            <table class="size-table">
+                <thead>
+                    <tr>
+                        <th>Size</th>
+                        <th>Chest (cm)</th>
+                        <th>Waist (cm)</th>
+                        <th>Hips (cm)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>S</td>
+                        <td>92-96</td>
+                        <td>76-80</td>
+                        <td>94-98</td>
+                    </tr>
+                    <tr>
+                        <td>M</td>
+                        <td>96-100</td>
+                        <td>80-84</td>
+                        <td>98-102</td>
+                    </tr>
+                    <tr>
+                        <td>L</td>
+                        <td>100-104</td>
+                        <td>84-88</td>
+                        <td>102-106</td>
+                    </tr>
+                    <tr>
+                        <td>XL</td>
+                        <td>104-108</td>
+                        <td>88-92</td>
+                        <td>106-110</td>
+                    </tr>
+                    <tr>
+                        <td>XXL</td>
+                        <td>108-112</td>
+                        <td>92-96</td>
+                        <td>110-114</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="color: rgba(255, 255, 255, 0.7); margin-top: 1rem;">* Measurements are in centimeters. For best fit, measure yourself and compare with the chart above.</p>
         </div>
     </div>
 
