@@ -11,14 +11,38 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeCatalogue() {
-    // Load products from comprehensive catalogue
-    currentProducts = getStoredComprehensiveCatalogue();
+    // Load products - prioritize admin panel data over comprehensive catalogue
+    currentProducts = loadProductsFromStorage();
     
     // Render initial products
     renderComprehensiveProducts(currentProducts);
     
     // Initialize filters
     setupFilterListeners();
+}
+
+// Load products from storage - prioritizes admin panel data
+function loadProductsFromStorage() {
+    // First try to get admin panel uploaded data
+    const adminProducts = localStorage.getItem('products') || 
+                         localStorage.getItem('titanSportsProducts') || 
+                         localStorage.getItem('kitHubProducts');
+    
+    if (adminProducts) {
+        try {
+            const parsedAdminProducts = JSON.parse(adminProducts);
+            if (parsedAdminProducts && parsedAdminProducts.length > 0) {
+                console.log('Using admin panel uploaded products:', parsedAdminProducts.length);
+                return parsedAdminProducts;
+            }
+        } catch (error) {
+            console.error('Error parsing admin products:', error);
+        }
+    }
+    
+    // Fall back to comprehensive catalogue if no admin data
+    console.log('Using comprehensive catalogue products');
+    return getStoredComprehensiveCatalogue();
 }
 
 // Render comprehensive products to grid
