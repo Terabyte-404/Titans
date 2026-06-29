@@ -23,50 +23,10 @@ let uploadStats = {
     totalUploadTime: 0
 };
 
-// Check admin authentication
-function checkAdminAuth() {
-    return new Promise((resolve, reject) => {
-        firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user) {
-                // Not authenticated, redirect to admin login
-                window.location.href = 'admin-login.html';
-                reject(new Error('Not authenticated'));
-                return;
-            }
-
-            try {
-                // Check if user has admin role
-                const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-                const userData = userDoc.data();
-                
-                if (userData && userData.role === 'admin') {
-                    // User is admin, proceed
-                    resolve(user);
-                } else {
-                    // User is not admin, redirect to admin login
-                    alert('You do not have admin privileges.');
-                    window.location.href = 'admin-login.html';
-                    reject(new Error('Not admin'));
-                }
-            } catch (error) {
-                console.error('Error checking admin status:', error);
-                window.location.href = 'admin-login.html';
-                reject(error);
-            }
-        });
-    });
-}
-
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Check admin authentication first
-    checkAdminAuth()
-        .then(() => {
-            initializeAdminPanel();
-        })
-        .catch((error) => {
-            console.error('Authentication failed:', error);
-        });
+    // Initialize admin panel without authentication
+    initializeAdminPanel();
 });
 
 function initializeAdminPanel() {

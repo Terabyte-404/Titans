@@ -11,79 +11,6 @@
     <script src="https://js.paystack.co/v1/inline.js"></script>
     <script src="js/productCatalogue.js"></script>
     <script src="js/catalogueManager.js"></script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/navigation-auth.js"></script>
-    <style>
-        .auth-loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-        .auth-loading-content {
-            text-align: center;
-            color: white;
-        }
-        .auth-loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--primary-orange);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
-    <script>
-        // Require authentication for main website content
-        document.addEventListener('DOMContentLoaded', function() {
-            // Create loading overlay
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'auth-loading';
-            loadingOverlay.id = 'authLoading';
-            loadingOverlay.innerHTML = `
-                <div class="auth-loading-content">
-                    <div class="auth-loading-spinner"></div>
-                    <p>Verifying authentication...</p>
-                </div>
-            `;
-            document.body.appendChild(loadingOverlay);
-            
-            // Hide main content initially
-            document.body.style.opacity = '0';
-            
-            firebase.auth().onAuthStateChanged(function(user) {
-                const loadingOverlay = document.getElementById('authLoading');
-                if (user) {
-                    // User is authenticated, show content
-                    if (loadingOverlay) {
-                        loadingOverlay.style.opacity = '0';
-                        setTimeout(() => loadingOverlay.remove(), 300);
-                    }
-                    document.body.style.opacity = '1';
-                    console.log('User is authenticated:', user.email);
-                } else {
-                    // User is not authenticated, redirect to login
-                    console.log('User is not authenticated, redirecting to login');
-                    window.location.href = 'login.html';
-                }
-            });
-        });
-    </script>
 </head>
 <body>
     <!-- Splash Screen -->
@@ -104,12 +31,9 @@
                     <nav>
                         <a href="#home">Home</a>
                         <a href="#products">Shop</a>
-                        <a href="admin-enhanced.html" id="adminLink" style="display: none;">Admin</a>
-                        <a href="login.html" id="loginLink">Login</a>
-                        <a href="register.html" id="registerLink">Register</a>
-                        <a href="dashboard.html" id="dashboardLink" style="display: none;">Dashboard</a>
-                        <a href="profile.html" id="profileLink" style="display: none;">Profile</a>
-                        <a href="#" onclick="logout()" id="logoutLink" style="display: none;">Logout</a>
+                        <a href="admin-enhanced.html">Admin</a>
+                        <a href="dashboard.html">Dashboard</a>
+                        <a href="profile.html">Profile</a>
                     </nav>
                     <div class="search-container">
                         <input type="text" id="searchInput" placeholder="Search jerseys, teams, equipment..." class="search-input">
@@ -147,12 +71,9 @@
             <div class="mobile-nav-links">
                 <a href="#home" onclick="toggleMobileMenu()">Home</a>
                 <a href="#products" onclick="toggleMobileMenu()">Shop</a>
-                <a href="admin-enhanced.html" id="mobileAdminLink" style="display: none;">Admin</a>
-                <a href="dashboard.html" id="mobileDashboardLink" style="display: none;">Dashboard</a>
-                <a href="profile.html" id="mobileProfileLink" style="display: none;">Profile</a>
-                <a href="login.html" id="mobileLoginLink">Login</a>
-                <a href="register.html" id="mobileRegisterLink">Register</a>
-                <a href="#" onclick="logout(); toggleMobileMenu();" id="mobileLogoutLink" style="display: none;">Logout</a>
+                <a href="admin-enhanced.html" onclick="toggleMobileMenu()">Admin</a>
+                <a href="dashboard.html" onclick="toggleMobileMenu()">Dashboard</a>
+                <a href="profile.html" onclick="toggleMobileMenu()">Profile</a>
             </div>
         </div>
     </header>
