@@ -25,7 +25,6 @@ let uploadStats = {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize admin panel without authentication
     initializeAdminPanel();
 });
 
